@@ -73,7 +73,7 @@ def main_worker(gpu, ngpus_per_node, config):
     print('[{}] GPU{} {}/{}: {}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
       gpu, idx, len(dataloader), names[0]))
     images, masks = set_device([images, masks])
-    images_masked = images*(1-masks) + masks #
+    images_masked = images*(1-masks) + masks
     with torch.no_grad():
       _, output = model(torch.cat((images_masked, masks), dim=1), masks)
     orig_imgs = postprocess(images) # 原始图像

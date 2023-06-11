@@ -26,8 +26,10 @@ block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[dims]
 model = set_device(InceptionV3([block_idx]))
 
 def main():
-  real_names = list(glob.glob('{}/*_orig.png'.format(args.resume)))
-  fake_names = list(glob.glob('{}/*_comp.png'.format(args.resume)))
+  # release_model/pennet_dtd_square256/results_00000_level_01 ==> args.resume
+  real_names = list(glob.glob('{}/*_orig.png'.format(args.resume))) # 获得指定目录下的所有原始文件
+  fake_names = list(glob.glob('{}/*_comp.png'.format(args.resume))) #
+  # 排序# 获得指定目录下的所有最终完整文件
   real_names.sort()
   fake_names.sort()
   # metrics prepare for image assesments
@@ -42,11 +44,11 @@ def main():
     real_images.append(np.array(rimg))
     fake_images.append(np.array(fimg))
   # calculating image quality assessments 计算图像质量评价
-  for key, val in metrics.items():
+  for key, val in metrics.items(): # 类似于函数指针
     evaluation_scores[key] = val(real_images, fake_images)
   print(' '.join(['{}: {:6f},'.format(key, val) for key,val in evaluation_scores.items()]))
   
-  # calculate fid statistics for real images 
+  # calculate fid statistics for real images
   real_images = np.array(real_images).astype(np.float32)/255.0
   real_images = real_images.transpose((0, 3, 1, 2))
   real_m, real_s = calculate_activation_statistics(real_images, model, batch_size, dims)

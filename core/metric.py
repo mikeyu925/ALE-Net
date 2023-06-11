@@ -26,7 +26,8 @@ def compare_mae(img_true, img_test):
 def ssim(frames1, frames2):
   error = 0
   for i in range(len(frames1)):
-    error += compare_ssim(frames1[i], frames2[i], multichannel=True, win_size=51)
+    # error += compare_ssim(frames1[i], frames2[i], multichannel=True, win_size=51) # 已经舍弃了
+    error += compare_ssim(frames1[i], frames2[i], channel_axis=2, win_size=51) # 计算两个图像之间的平均结构相似性指数
   return error/len(frames1)
 
 def psnr(frames1, frames2):

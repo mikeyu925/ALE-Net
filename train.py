@@ -7,7 +7,7 @@ import torch
 import torch.multiprocessing as mp
 
 from core.philly import ompi_size, ompi_local_size, ompi_rank, ompi_local_rank
-from core.philly import get_master_ip, gpu_indices, ompi_universe_size
+from core.philly import get_master_ip, ompi_universe_size
 from core.utils import set_seed
 from core.trainer import Trainer
 

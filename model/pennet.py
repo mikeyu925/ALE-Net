@@ -175,6 +175,7 @@ class Discriminator(BaseNetwork):
     self.use_sigmoid = use_sigmoid
     cnum = 64
     self.encoder = nn.Sequential(
+      # use_spectral_norm 给设定好的网络进行频谱归一化。主要用于生成对抗网络的鉴别器
       use_spectral_norm(nn.Conv2d(in_channels=in_channels, out_channels=cnum,
         kernel_size=5, stride=2, padding=1, bias=False), use_sn=use_sn),
       nn.LeakyReLU(0.2, inplace=True),
