@@ -49,7 +49,7 @@ class InceptionV3(nn.Module):
       'Last possible output block index is 3'
 
     self.blocks = nn.ModuleList()
-    inception = models.inception_v3(pretrained=True)
+    inception = models.inception_v3(pretrained=True)  # error
 
     # Block 0: input to maxpool1
     block0 = [

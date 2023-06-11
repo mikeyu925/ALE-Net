@@ -73,16 +73,16 @@ def main_worker(gpu, ngpus_per_node, config):
     print('[{}] GPU{} {}/{}: {}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
       gpu, idx, len(dataloader), names[0]))
     images, masks = set_device([images, masks])
-    images_masked = images*(1-masks) + masks
+    images_masked = images*(1-masks) + masks #
     with torch.no_grad():
       _, output = model(torch.cat((images_masked, masks), dim=1), masks)
-    orig_imgs = postprocess(images)
-    mask_imgs = postprocess(images_masked)
-    comp_imgs = postprocess((1-masks)*images+masks*output)
-    pred_imgs = postprocess(output)
+    orig_imgs = postprocess(images) # 原始图像
+    mask_imgs = postprocess(images_masked) # 中间一块白的图像
+    comp_imgs = postprocess((1-masks)*images+masks*output) # 将四周替换为原始图像的预测图像
+    pred_imgs = postprocess(output) # 预测的图像
     for i in range(len(orig_imgs)):
-      Image.fromarray(pred_imgs[i]).save(os.path.join(path, '{}_pred.png'.format(names[i].split('.')[0])))
-      Image.fromarray(orig_imgs[i]).save(os.path.join(path, '{}_orig.png'.format(names[i].split('.')[0])))
+      Image.fromarray(pred_imgs[i]).save(os.path.join(path, '{}_pred.png'.format(names[i].split('.')[0]))) #
+      Image.fromarray(orig_imgs[i]).save(os.path.join(path, '{}_orig.png'.format(names[i].split('.')[0]))) # 原始图像
       Image.fromarray(comp_imgs[i]).save(os.path.join(path, '{}_comp.png'.format(names[i].split('.')[0])))
       Image.fromarray(mask_imgs[i]).save(os.path.join(path, '{}_mask.png'.format(names[i].split('.')[0])))
   print('Finish in {}'.format(path))

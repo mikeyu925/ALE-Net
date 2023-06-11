@@ -41,7 +41,7 @@ def main():
     fimg = Image.open(fname)
     real_images.append(np.array(rimg))
     fake_images.append(np.array(fimg))
-  # calculating image quality assessments
+  # calculating image quality assessments 计算图像质量评价
   for key, val in metrics.items():
     evaluation_scores[key] = val(real_images, fake_images)
   print(' '.join(['{}: {:6f},'.format(key, val) for key,val in evaluation_scores.items()]))

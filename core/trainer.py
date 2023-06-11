@@ -51,7 +51,7 @@ class Trainer():
 
     # set up losses and metrics 设置损失和metrics
     self.adversarial_loss = set_device(AdversarialLoss(type=self.config['losses']['gan_type']))
-    self.l1_loss = nn.L1Loss()
+    self.l1_loss = nn.L1Loss()  # L1损失
     self.dis_writer = None
     self.gen_writer = None
     self.summary = {}
@@ -97,14 +97,14 @@ class Trainer():
   # 加载生成网络和判别网络
   def load(self):
     model_path = self.config['save_dir'] # 'release_model/pennet_dtd_square256'
-    if os.path.isfile(os.path.join(model_path, 'latest.ckpt')):
+    if os.path.isfile(os.path.join(model_path, 'latest.ckpt')): # 找最新的epoch
       latest_epoch = open(os.path.join(model_path, 'latest.ckpt'), 'r').read().splitlines()[-1] # 读取最新的epoch
     else:
       ckpts = [os.path.basename(i).split('.pth')[0] for i in glob.glob(os.path.join(model_path, '*.pth'))]
       ckpts.sort()
       latest_epoch = ckpts[-1] if len(ckpts)>0 else None
-    if latest_epoch is not None:
-      gen_path = os.path.join(model_path, 'gen_{}.pth'.format(str(latest_epoch).zfill(5)))
+    if latest_epoch is not None: # 如果有最新的epoch
+      gen_path = os.path.join(model_path, 'gen_{}.pth'.format(str(latest_epoch).zfill(5))) # 加载权重文件
       dis_path = os.path.join(model_path, 'dis_{}.pth'.format(str(latest_epoch).zfill(5)))
       opt_path = os.path.join(model_path, 'opt_{}.pth'.format(str(latest_epoch).zfill(5)))
       if self.config['global_rank'] == 0:
@@ -118,7 +118,7 @@ class Trainer():
       self.optimD.load_state_dict(data['optimD'])
       self.epoch = data['epoch']
       self.iteration = data['iteration']
-    else:
+    else: # 没有epoch
       if self.config['global_rank'] == 0:
         print('Warnning: There is no trained model found. An initialized model will be used.')
 
@@ -158,19 +158,19 @@ class Trainer():
       self.iteration += 1
       self.adjust_learning_rate() # 调整学习率
       end = time.time()
-      images, masks = set_device([images, masks]) # 加载至GPU  mask是一个中间白色矩形的黑色图像？
+      images, masks = set_device([images, masks]) # 加载至GPU  mask是一个中间白色矩形[1]的黑色[0]图像
       images_masked = (images * (1 - masks).float()) + masks # 得到被掩码的图像，中间某个区域是白色
-      inputs = torch.cat((images_masked, masks), dim=1)
+      inputs = torch.cat((images_masked, masks), dim=1) # 这里为什么要堆叠呢？
       feats, pred_img = self.netG(inputs, masks)                        # in: [rgb(3) + edge(1)]
-      comp_img = (1 - masks)*images + masks * pred_img
-      self.add_summary(self.dis_writer, 'lr/dis_lr', self.get_lr(type='D'))
+      comp_img = (1 - masks)*images + masks * pred_img # 将原本的图像的周围图像 + 预测图像的掩码图像进行合并 ==> 最终完整图像
+      self.add_summary(self.dis_writer, 'lr/dis_lr', self.get_lr(type='D')) # 记录当前的学习率
       self.add_summary(self.gen_writer, 'lr/gen_lr', self.get_lr(type='G'))
 
       gen_loss = 0
       dis_loss = 0
       # image discriminator loss 图像判别器损失
-      dis_real_feat = self.netD(images)                   
-      dis_fake_feat = self.netD(comp_img.detach())     
+      dis_real_feat = self.netD(images)      # 获取真实图像判别网络输出特征
+      dis_fake_feat = self.netD(comp_img.detach())   # 为什么要detach()
       dis_real_loss = self.adversarial_loss(dis_real_feat, True, True)
       dis_fake_loss = self.adversarial_loss(dis_fake_feat, False, True)
       dis_loss += (dis_real_loss + dis_fake_loss) / 2
@@ -190,11 +190,11 @@ class Trainer():
       hole_loss = self.l1_loss(pred_img*masks, images*masks) / torch.mean(masks)
       gen_loss += hole_loss * self.config['losses']['hole_weight']
       self.add_summary(self.gen_writer, 'loss/hole_loss', hole_loss.item())
-      valid_loss = self.l1_loss(pred_img*(1-masks), images*(1-masks)) / torch.mean(1-masks) 
+      valid_loss = self.l1_loss(pred_img*(1-masks), images*(1-masks)) / torch.mean(1-masks)   # 中间一块黑
       gen_loss += valid_loss * self.config['losses']['valid_weight']
       self.add_summary(self.gen_writer, 'loss/valid_loss', valid_loss.item())
 
-      if feats is not None:
+      if feats is not None: # 计算特征金字塔损失
         pyramid_loss = 0 
         for _, f in enumerate(feats):
           pyramid_loss += self.l1_loss(f, F.interpolate(images, size=f.size()[2:4], mode='bilinear', align_corners=True))
@@ -204,15 +204,15 @@ class Trainer():
       # generator backward
       self.optimG.zero_grad()
       gen_loss.backward()
-      self.optimG.step()      
+      self.optimG.step()
       
       # logs
-      new_mae = (torch.mean(torch.abs(images - pred_img)) / torch.mean(masks)).item()
+      new_mae = (torch.mean(torch.abs(images - pred_img)) / torch.mean(masks)).item() # 计算MAE
       mae = new_mae if mae == 0 else (new_mae+mae) / 2
       speed = images.size(0)/(time.time() - end)*self.config['world_size']
       logs = [("epoch", self.epoch),("iter", self.iteration),("lr", self.get_lr()),
         ('mae', mae), ('samples/s', speed)]
-      if self.config['global_rank'] == 0:
+      if self.config['global_rank'] == 0: # True
         progbar.add(len(images)*self.config['world_size'], values=logs \
           if self.train_args['verbosity'] else [x for x in logs if not x[0].startswith('l_')])
 
