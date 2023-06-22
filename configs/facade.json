@@ -3,8 +3,8 @@
     "save_dir": "release_model/",
     "data_loader": {
         "name": "facade", 
-        "zip_root": "../datazip",
-        "flist_root": "../flist",
+        "zip_root": "datasets",
+        "flist_root": "flist",
         "mask": "square",
         "extend": 200,
         "w": 256,
