@@ -220,7 +220,7 @@ class Trainer():
       if self.iteration % self.train_args['save_freq'] == 0:
         self.save(int(self.iteration//self.train_args['save_freq']))
       if self.iteration % self.train_args['valid_freq'] == 0:
-        self._test_epoch(int(self.iteration//self.train_args['save_freq']))
+        # self._test_epoch(int(self.iteration//self.train_args['save_freq'])) # 训练过程中不再进行test 和 eval
         if self.config['global_rank'] == 0:
           print('[**] Training till {} in Rank {}\n'.format(
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.config['global_rank']))
